@@ -2,17 +2,17 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>IngSw_Application</RootNamespace>
+    <RootNamespace>IngSw_Infraestructure.Data</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Interfaces\" />
+    <PackageReference Include="MySql.Data" Version="9.5.0" />
   </ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\IngSw-Domain\IngSw-Domain.csproj" />
-	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\IngSw-Domain\IngSw-Domain.csproj" />
+  </ItemGroup>
 
 </Project>
