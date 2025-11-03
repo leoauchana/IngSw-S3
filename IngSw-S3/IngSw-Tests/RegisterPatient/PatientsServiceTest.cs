@@ -1,7 +1,7 @@
 ﻿using IngSw_Application.Services;
 using IngSw_Domain.Entities;
 using IngSw_Domain.Interfaces;
-using NSubtitute;
+using NSubstitute;
 
 namespace IngSw_Tests.RegisterPatient;
 
