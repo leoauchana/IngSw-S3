@@ -8,11 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Interfaces\" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.15" />
   </ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\IngSw-Domain\IngSw-Domain.csproj" />
-	</ItemGroup>
 
 </Project>
