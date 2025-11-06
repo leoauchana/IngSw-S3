@@ -19,6 +19,12 @@ public class AuthRepository : IAuthRepository
         return null;
     }
 
+    public Task<User?> Login(User userData)
+    {
+        var userFound = _authDao.Login(userData);
+        return null;
+    }
+
 
     //private Nurse MapEntity(Dictionary<string, object>? reader) where TEntity : EntityBase
     //{

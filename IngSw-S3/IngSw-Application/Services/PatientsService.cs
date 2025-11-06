@@ -17,7 +17,7 @@ public class PatientsService
     public async Task<PatientDto.Response?> AddPatient(PatientDto.Request patientData)
     {
         var patientFound = await _patientRepository.GetByCuil(patientData.cuilPatient);
-        if (patientFound != null)
+        if (patientFound != null && patientFound!.Any() )
             throw new BusinessConflictException($"El paciente de cuil {patientData.cuilPatient} ya se encuentra registrado");
         var newPatient = new Patient
         {
@@ -39,10 +39,10 @@ public class PatientsService
 
     public async Task<List<PatientDto.Response>?> GetByCuil(string cuilPatient)
     {
-        var cuilValid = Cuil.Create(cuilPatient);
-        var patientsFounds = await _patientRepository.GetByCuil(cuilValid.Value);
+        //var cuilValid = Cuil.Create(cuilPatient);
+        var patientsFounds = await _patientRepository.GetByCuil(cuilPatient);
         if (patientsFounds == null || !(patientsFounds.Count > 0))
-            throw new NullException($"No hay pacientes que coincidan con el cuil {cuilValid.Value} registrados.");
+            throw new NullException($"No hay pacientes que coincidan con el cuil {cuilPatient} registrados.");
         return patientsFounds.Select(pr => new PatientDto.Response(pr.Cuil!.Value!, pr.Name!, pr.LastName!,
                     pr.Email!, pr.Domicilie!.Street!, pr.Domicilie.Number, pr.Domicilie.Locality!))
                     .ToList();
