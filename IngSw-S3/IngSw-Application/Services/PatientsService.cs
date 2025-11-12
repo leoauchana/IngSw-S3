@@ -3,6 +3,7 @@ using IngSw_Application.Exceptions;
 using IngSw_Domain.Entities;
 using IngSw_Domain.Interfaces;
 using IngSw_Domain.ValueObjects;
+using Microsoft.IdentityModel.Tokens;
 
 namespace IngSw_Application.Services;
 
@@ -21,6 +22,22 @@ public class PatientsService
         var patientFound = await _patientRepository.GetByCuil(patientData.cuilPatient);
         if (patientFound != null)
             throw new BusinessConflictException($"El paciente de cuil {patientData.cuilPatient} ya se encuentra registrado");
+
+        var campos = new Dictionary<string, object?>
+        {
+            { "Apellido", patientData.lastNamePatient },
+            { "Nombre", patientData.namePatient },
+            { "Calle", patientData.streetDomicilie },
+            { "Localidad", patientData.localityDomicilie }
+        };
+        foreach (var campo in campos)
+        {
+            if (string.IsNullOrWhiteSpace(Convert.ToString(campo.Value)))
+                throw new ArgumentException($"El campo '{campo.Key}' no puede ser omitido.");
+        }
+        if (patientData.numberDomicilie <= 0 || patientData.numberDomicilie > 9999)
+            throw new ArgumentException("El campo 'Número' no puede ser omitido o exceder el límite permitido.");
+
         Affiliate? affiliation = null;
         bool oneCompleted = string.IsNullOrEmpty(patientData.nameSocialWork) != string.IsNullOrEmpty(patientData.affiliateNumber);
         if (oneCompleted)

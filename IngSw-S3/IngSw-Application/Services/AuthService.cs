@@ -41,6 +41,24 @@ public class AuthService : IAuthService
 
     public async Task<UserDto.Response?> Register(UserDto.RequestRegister? userData)
     {
+        var campos = new Dictionary<string, object?>
+        {
+            { "Email",              userData?.email },
+            { "Contraseña",         userData?.password },
+            { "Confirmacion",       userData?.confirmPassword },
+            { "Nombre",             userData?.name },
+            { "Apellido",           userData?.lastName },
+            { "Cuil",               userData?.cuil },
+            { "Licencia",           userData?.licence },
+            { "Numero de Telefono", userData?.phoneNumber },
+            { "Tipo de Empleado",   userData?.typeEmployee }
+        };
+        foreach (var campo in campos)
+        {
+            if (string.IsNullOrWhiteSpace(Convert.ToString(campo.Value)))
+                throw new ArgumentException($"El campo '{campo.Key}' no puede ser omitido.");
+        }
+
         User newUser = new User
         {
             Email = userData?.email,
@@ -49,7 +67,7 @@ public class AuthService : IAuthService
             {
                 Name = userData?.name,
                 LastName = userData?.lastName,
-                Cuil = Cuil.Create(userData?.cuil),
+                Cuil = Cuil.Create(userData!.cuil),
                 PhoneNumber = userData?.phoneNumber,
                 Registration = userData?.licence,
             }
@@ -58,12 +76,12 @@ public class AuthService : IAuthService
 
         return userRegistered != null ? new UserDto.Response
         (
-            newUser.Email, 
-            newUser.Employee.Name, 
-            newUser.Employee.LastName, 
-            newUser.Employee.Cuil.Value, 
-            newUser.Employee.Registration, 
-            newUser.Employee.PhoneNumber,
+            newUser.Email!, 
+            newUser.Employee.Name!, 
+            newUser.Employee.LastName!, 
+            newUser.Employee.Cuil.Value!, 
+            newUser.Employee.Registration!, 
+            newUser.Employee.PhoneNumber!,
             newUser.Employee.GetType().Name
         ) : null;
     }

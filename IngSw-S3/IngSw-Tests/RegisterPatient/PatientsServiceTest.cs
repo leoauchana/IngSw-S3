@@ -344,20 +344,437 @@ public class PatientsServiceTest
         Assert.NotNull(patientsFound);
         Assert.Equal(2, patientsFound.Count);
         // Comprobamos propiedades de los DTOs resultantes
-        Assert.Equal(patientsFromRepository[0].Cuil.Value, patientsFound[0].cuilPatient);
-        Assert.Equal(patientsFromRepository[1].Cuil.Value, patientsFound[1].cuilPatient);
+        Assert.Equal(patientsFromRepository[0].Cuil!.Value, patientsFound[0].cuilPatient);
+        Assert.Equal(patientsFromRepository[1].Cuil!.Value, patientsFound[1].cuilPatient);
         Assert.Equal(patientsFromRepository[0].Name, patientsFound[0].namePatient);
         Assert.Equal(patientsFromRepository[1].Name, patientsFound[1].namePatient);
+    }
+    [Fact]
+    public async Task GetByCuil_WhenExistsAUniqueMatchingCuil_ShouldReturnThePatient()
+    {
+        // Arrange
+        string cuilReceived = "20-457583";
+
+        var patientsFromRepository = new List<Patient>
+        {
+            new Patient
+            {
+                Cuil = Cuil.Create("20-45758331-8"),
+                Name = "Lautaro",
+                LastName = "Lopez",
+                Email = "lautalopez@gmail.com",
+                Domicilie = new Domicilie
+                {
+                    Number = 324,
+                    Street = "Jujuy",
+                    Locality = "San Miguel"
+                }
+            }
+        };
+
+        _patientsRepository.GetByCuil(cuilReceived)
+               .Returns(Task.FromResult<List<Patient>?>(patientsFromRepository));
+
+        // Act
+        var patientsFound = await _patientsService.GetByCuil(cuilReceived);
+
+        // Assert
+        await _patientsRepository.Received(1).GetByCuil(cuilReceived);
+
+        Assert.NotNull(patientsFound);
+        Assert.Single(patientsFound);
+        // Comprobamos propiedades de los DTOs resultantes
+        Assert.Equal(patientsFromRepository[0].Cuil!.Value, patientsFound[0].cuilPatient);
+        Assert.Equal(patientsFromRepository[0].Name, patientsFound[0].namePatient);
     }
     [Fact]
     public async Task GetByCuil_WhenNoPatientsFound_ShouldThrowNullException()
     {
         // Arrange
         string cuilReceived = "20-45758";
+
+        _patientsRepository.GetByCuil(cuilReceived)!.Returns(Task.FromResult<List<Patient>?>(null));
+
         //Act & Arrange
         var exception = await Assert.ThrowsAsync<NullException>(
             () => _patientsService.GetByCuil(cuilReceived)
             );
+        await _patientsRepository.Received(1).GetByCuil(cuilReceived);
         Assert.Equal($"No hay pacientes que coincidan con el cuil {cuilReceived} registrados.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenLastNameIsOmitted_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.Request(
+            cuilPatient: "20-45750673-8",
+            namePatient: "Lautaro",
+            lastNamePatient: "",
+            email: "lautalopez@gmail.com",
+            streetDomicilie: "Avenue Nine Of July",
+            numberDomicilie: 356,
+            localityDomicilie: "CABA",
+            nameSocialWork: "OSPE",
+            affiliateNumber: "4798540152"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Apellido' no puede ser omitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenLastNameIsWhiteSpace_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.Request(
+            cuilPatient: "20-45750673-8",
+            namePatient: "Lautaro",
+            lastNamePatient: "  ",
+            email: "lautalopez@gmail.com",
+            streetDomicilie: "Avenue Nine Of July",
+            numberDomicilie: 356,
+            localityDomicilie: "CABA",
+            nameSocialWork: "OSPE",
+            affiliateNumber: "4798540152"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Apellido' no puede ser omitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenLastNameIsNull_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.Request(
+            cuilPatient: "20-45750673-8",
+            namePatient: "Lautaro",
+            lastNamePatient: null!,
+            email: "lautalopez@gmail.com",
+            streetDomicilie: "Avenue Nine Of July",
+            numberDomicilie: 356,
+            localityDomicilie: "CABA",
+            nameSocialWork: "OSPE",
+            affiliateNumber: "4798540152"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Apellido' no puede ser omitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenNameIsOmitted_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.Request(
+            cuilPatient: "20-45750673-8",
+            namePatient: "",
+            lastNamePatient: "Lopez",
+            email: "lautalopez@gmail.com",
+            streetDomicilie: "Avenue Nine Of July",
+            numberDomicilie: 356,
+            localityDomicilie: "CABA",
+            nameSocialWork: "OSPE",
+            affiliateNumber: "4798540152"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Nombre' no puede ser omitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenNameIsWhiteSpace_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.Request(
+            cuilPatient: "20-45750673-8",
+            namePatient: "   ",
+            lastNamePatient: "Lopez",
+            email: "lautalopez@gmail.com",
+            streetDomicilie: "Avenue Nine Of July",
+            numberDomicilie: 356,
+            localityDomicilie: "CABA",
+            nameSocialWork: "OSPE",
+            affiliateNumber: "4798540152"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Nombre' no puede ser omitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenNameIsNull_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.Request(
+            cuilPatient: "20-45750673-8",
+            namePatient: null!,
+            lastNamePatient: "Lopez",
+            email: "lautalopez@gmail.com",
+            streetDomicilie: "Avenue Nine Of July",
+            numberDomicilie: 356,
+            localityDomicilie: "CABA",
+            nameSocialWork: "OSPE",
+            affiliateNumber: "4798540152"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Nombre' no puede ser omitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenStreetIsOmitted_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.Request(
+            cuilPatient: "20-45750673-8",
+            namePatient: "Lautaro",
+            lastNamePatient: "Lopez",
+            email: "lautalopez@gmail.com",
+            streetDomicilie: "",
+            numberDomicilie: 356,
+            localityDomicilie: "CABA",
+            nameSocialWork: "OSPE",
+            affiliateNumber: "4798540152"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Calle' no puede ser omitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenStreetIsWhiteSpace_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.Request(
+            cuilPatient: "20-45750673-8",
+            namePatient: "Lautaro",
+            lastNamePatient: "Lopez",
+            email: "lautalopez@gmail.com",
+            streetDomicilie: "   ",
+            numberDomicilie: 356,
+            localityDomicilie: "CABA",
+            nameSocialWork: "OSPE",
+            affiliateNumber: "4798540152"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Calle' no puede ser omitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenStreetIsNull_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.Request(
+            cuilPatient: "20-45750673-8",
+            namePatient: "Lautaro",
+            lastNamePatient: "Lopez",
+            email: "lautalopez@gmail.com",
+            streetDomicilie: null!,
+            numberDomicilie: 356,
+            localityDomicilie: "CABA",
+            nameSocialWork: "OSPE",
+            affiliateNumber: "4798540152"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Calle' no puede ser omitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenNumberIsOmitted_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.Request(
+            cuilPatient: "20-45750673-8",
+            namePatient: "Lautaro",
+            lastNamePatient: "Lopez",
+            email: "lautalopez@gmail.com",
+            streetDomicilie: "Avenue Nine Of July",
+            numberDomicilie: 0,
+            localityDomicilie: "CABA",
+            nameSocialWork: "OSPE",
+            affiliateNumber: "4798540152"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Número' no puede ser omitido o exceder el límite permitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenNumberIsNegative_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.Request(
+            cuilPatient: "20-45750673-8",
+            namePatient: "Lautaro",
+            lastNamePatient: "Lopez",
+            email: "lautalopez@gmail.com",
+            streetDomicilie: "Avenue Nine Of July",
+            numberDomicilie: -356,
+            localityDomicilie: "CABA",
+            nameSocialWork: "OSPE",
+            affiliateNumber: "4798540152"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Número' no puede ser omitido o exceder el límite permitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenNumberIsTooHigh_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.Request(
+            cuilPatient: "20-45750673-8",
+            namePatient: "Lautaro",
+            lastNamePatient: "Lopez",
+            email: "lautalopez@gmail.com",
+            streetDomicilie: "Avenue Nine Of July",
+            numberDomicilie: 10000,
+            localityDomicilie: "CABA",
+            nameSocialWork: "OSPE",
+            affiliateNumber: "4798540152"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Número' no puede ser omitido o exceder el límite permitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenLocalityIsOmitted_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.Request(
+            cuilPatient: "20-45750673-8",
+            namePatient: "Lautaro",
+            lastNamePatient: "Lopez",
+            email: "lautalopez@gmail.com",
+            streetDomicilie: "Avenue Nine Of July",
+            numberDomicilie: 356,
+            localityDomicilie: "",
+            nameSocialWork: "OSPE",
+            affiliateNumber: "4798540152"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Localidad' no puede ser omitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenLocalityIsWhiteSpace_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.Request(
+            cuilPatient: "20-45750673-8",
+            namePatient: "Lautaro",
+            lastNamePatient: "Lopez",
+            email: "lautalopez@gmail.com",
+            streetDomicilie: "Avenue Nine Of July",
+            numberDomicilie: 356,
+            localityDomicilie: "   ",
+            nameSocialWork: "OSPE",
+            affiliateNumber: "4798540152"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Localidad' no puede ser omitido.", exception.Message);
+    }
+    [Fact]
+    public async Task AddPatient_WhenLocalityIsNull_ShouldArgumentException()
+    {
+        // Arrange
+        var patientDto = new PatientDto.Request(
+            cuilPatient: "20-45750673-8",
+            namePatient: "Lautaro",
+            lastNamePatient: "Lopez",
+            email: "lautalopez@gmail.com",
+            streetDomicilie: "Avenue Nine Of July",
+            numberDomicilie: 356,
+            localityDomicilie: null!,
+            nameSocialWork: "OSPE",
+            affiliateNumber: "4798540152"
+        );
+
+        // Act
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _patientsService.AddPatient(patientDto)
+            );
+
+        // Assert
+        Assert.NotNull(exception);
+        Assert.Equal("El campo 'Localidad' no puede ser omitido.", exception.Message);
     }
 }
